@@ -10,10 +10,10 @@ const packageRouter = require('./routes/credit_package');
 app.use(cors());
 app.use(express.json());
 
-// GET 取得教練技能列表、POST 新增教練技能、DELET刪除教練技能
+// GET 取得教練技能列表、POST 新增教練技能、DELETE 刪除教練技能
 app.use('/api/coaches/skill', skillRouter);
 
-// GET 取得購買方案列表
+// GET 取得購買方案列表、POST 新增購買方案、DELETE 刪除購買方案
 app.use('/api/credit-package', packageRouter);
 
 

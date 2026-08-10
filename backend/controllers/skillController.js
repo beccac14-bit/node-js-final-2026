@@ -54,9 +54,9 @@ const deleteSkills = async (req, res) => {
     });
   }  
   
-  // 2. 無重複，新增技能
+  // 2. 刪除技能
 
-  await skillRepository.softDelete( skillId );
+  const result = await skillRepository.softDelete( skillId );
   const softDeletedSkill = await skillRepository.findOne({
     where: { id: skillId },
     withDeleted: true,
@@ -65,7 +65,7 @@ const deleteSkills = async (req, res) => {
   res.status(200).json({
     status: 'success',
     data: { "raw": [], 
-      "affected": 1
+      "affected": result.affected
     },
   });
 } 
