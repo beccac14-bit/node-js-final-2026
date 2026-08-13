@@ -7,7 +7,7 @@ const userRepository = dataSource.getRepository('User');
 
 
 // POST /api/users/signup 註冊新會員帳號
-const postUsers = async (req, res) => {
+const postUsersSignup = async (req, res) => {
 const { name, email, password } = req.body;
   
   // 1. 檢查欄位是否正確
@@ -65,7 +65,7 @@ const { name, email, password } = req.body;
 
 
 // POST /api/users/login 會員登入，取得 JWT token
-
+const postUsersLogin = async (req, res) => {
   // 1. 檢查欄位是否正確
   // 錯誤 400：缺少必要欄位
     const { id, email, password, role } = req.body;
@@ -115,9 +115,10 @@ const { name, email, password } = req.body;
       token,
       data: { user: name }
     });
-
+};
 
 module.exports = {
-  postUsers,
+  postUsersSignup,
+  postUsersLogin
   
 };
