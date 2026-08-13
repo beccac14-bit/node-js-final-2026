@@ -6,7 +6,8 @@ const userPackageController = require('../controllers/userController');
 
 
 // router.get('/', creditPackageController.getPackages);
-router.post('/', userController.postUsers);
+router.post('/', userController.postUsersSignup);
+router.post('/', userController.postUsersLogin);
 // router.delete('/:creditPackageId', checkPackageId, creditPackageController.deletePackages);
 
  
