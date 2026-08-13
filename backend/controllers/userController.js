@@ -10,12 +10,9 @@ const userRepository = dataSource.getRepository('User');
 const postUsers = async (req, res) => {
 const { name, email, password } = req.body;
   
-  // 1. 檢查欄位是否正確：錯誤 400：缺少必要欄位
-  
-    const standardFields = ['name', 'email', 'password'];
-    const validateFieldsResult = standardFields.filter(field => !userInfo[field]); // 如果有缺就回陣列
-
-    if ( validateFieldsResult.length > 0 ) {
+  // 1. 檢查欄位是否正確
+  // 錯誤 400：缺少必要欄位
+    if ( !name?.trim() || !email?.trim() || !password?.trim() ) {
         return res.status(400).json({
           status: 'false', 
           message: `欄位未填寫正確`});  
@@ -66,6 +63,58 @@ const { name, email, password } = req.body;
     
 };
 
+
+// POST /api/users/login 會員登入，取得 JWT token
+
+  // 1. 檢查欄位是否正確
+  // 錯誤 400：缺少必要欄位
+    const { id, email, password, role } = req.body;
+    if ( !name?.trim() || !email?.trim() || !password?.trim() ) {
+        return res.status(400).json({
+          status: 'false', 
+          message: `欄位未填寫正確`});  
+    };
+
+  // 2. 檢查密碼是否符合規則
+  // 錯誤 400：必須同時包含英文大寫、英文小寫、數字，長度 8～16 字
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d]{8,16}$/;
+    const passwordCorrectFormat = passwordRegex.test(userInfo.password);
+    
+    if( !passwordCorrectFormat ){
+      return res.status(400).json({
+          status: 'false', 
+          message: `欄位未填寫正確`}); 
+    };
+
+  // 3. 檢查 email 是否有符合的使用者
+  // 錯誤 400：使用者不存在或密碼輸入錯誤
+    const existingUser = await userRepository.findOneBy({ email });
+
+    if( !existingUser ){
+        return res.status(400).json({
+          status: 'false', 
+          message: `帳號或密碼錯誤`});
+    }
+  // 4. 驗證 password 是否輸入正確
+    // 錯誤 400：使用者不存在或密碼輸入錯誤
+    const isMatch = await bcrypt.compare(password , existingUser.password);
+    if(!isMatch){
+        return res.status(400).json({
+          status: 'false', 
+          message: `帳號或密碼錯誤`});
+    };
+
+  // 5. 回傳 201：用 jwt.sign 簽出 token，payload 必須包含 { id, role, exp } 
+    // secret 使用 process.env.JWT_SECRET，有效期設為 10 天
+
+    const payload = { id, role };
+    const SECRET = process.env.JWT_SECRET;
+    const token = jwt.sign( payload, SECRET, {exp : '10d'} );
+    res.status(201).json({ 
+      status: 'success',
+      token,
+      data: { user: name }
+    });
 
 
 module.exports = {
