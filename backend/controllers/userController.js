@@ -1,9 +1,10 @@
 const express = require('express');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const verifyToken = require('../middlewares/verifyToken');
 const router = express.Router();
+const dataSource = require('../config/data-source');
 const userRepository = dataSource.getRepository('User');
+const { validatePassword } = require('../utils/validate');
 
 
 // POST /api/users/signup 註冊新會員帳號
@@ -14,18 +15,16 @@ const { name, email, password } = req.body;
   // 錯誤 400：缺少必要欄位
     if ( !name?.trim() || !email?.trim() || !password?.trim() ) {
         return res.status(400).json({
-          status: 'false', 
+          status: 'failed', 
           message: `欄位未填寫正確`});  
     };
 
   // 2. 檢查密碼是否符合規則
   // 錯誤 400：密碼規則由後端把關：必須同時包含英文大寫、英文小寫、數字，長度 8～16 字
-    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d]{8,16}$/;
-    const passwordCorrectFormat = passwordRegex.test(userInfo.password);
     
-    if( !passwordCorrectFormat ){
+    if( !validatePassword(password) ){
       return res.status(400).json({
-        status: 'false',
+        status: 'failed',
         message: `密碼不符合規則，需要包含英文數字大小寫，最短8個字，最長16個字`});  
     };
 
@@ -50,15 +49,16 @@ const { name, email, password } = req.body;
       name, 
       email, 
       password: hashedPassword,
-      role: 'USER' });
-    ;
-    const savedUser = await userRepository.save(newMember)
+      role: 'USER' 
+    });
+
+    const savedUser = await userRepository.save(newUser)
     res.status(201).json({
       status: 'success',
       data: {
         user: {
-          id: savedPackage.id,
-          name: savedPackage.name }}
+          id: savedUser.id,
+          name: savedUser.name }}
     });
     
 };
@@ -68,22 +68,20 @@ const { name, email, password } = req.body;
 const postUsersLogin = async (req, res) => {
   // 1. 檢查欄位是否正確
   // 錯誤 400：缺少必要欄位
-    const { id, email, password, role } = req.body;
-    if ( !name?.trim() || !email?.trim() || !password?.trim() ) {
+    const { email, password } = req.body;
+    if ( !email?.trim() || !password?.trim() ) {
         return res.status(400).json({
-          status: 'false', 
+          status: 'failed', 
           message: `欄位未填寫正確`});  
     };
 
   // 2. 檢查密碼是否符合規則
   // 錯誤 400：必須同時包含英文大寫、英文小寫、數字，長度 8～16 字
-    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d]{8,16}$/;
-    const passwordCorrectFormat = passwordRegex.test(userInfo.password);
     
-    if( !passwordCorrectFormat ){
+    if( !validatePassword(password) ){
       return res.status(400).json({
-          status: 'false', 
-          message: `欄位未填寫正確`}); 
+          status: 'failed', 
+          message: `密碼不符合規則，需要包含英文數字大小寫，最短8個字，最長16個字`}); 
     };
 
   // 3. 檢查 email 是否有符合的使用者
@@ -92,7 +90,7 @@ const postUsersLogin = async (req, res) => {
 
     if( !existingUser ){
         return res.status(400).json({
-          status: 'false', 
+          status: 'failed', 
           message: `帳號或密碼錯誤`});
     }
   // 4. 驗證 password 是否輸入正確
@@ -100,25 +98,149 @@ const postUsersLogin = async (req, res) => {
     const isMatch = await bcrypt.compare(password , existingUser.password);
     if(!isMatch){
         return res.status(400).json({
-          status: 'false', 
+          status: 'failed', 
           message: `帳號或密碼錯誤`});
     };
 
   // 5. 回傳 201：用 jwt.sign 簽出 token，payload 必須包含 { id, role, exp } 
     // secret 使用 process.env.JWT_SECRET，有效期設為 10 天
-
-    const payload = { id, role };
+    
+    const tenDaysInSeconds = 10 * 24 * 60 * 60; // 864000 秒
+    const exp = Math.floor(Date.now() / 1000) + tenDaysInSeconds;
+    const payload = { id:existingUser.id, role:existingUser.role, exp };
     const SECRET = process.env.JWT_SECRET;
-    const token = jwt.sign( payload, SECRET, {exp : '10d'} );
+    const token = jwt.sign( payload, SECRET);
     res.status(201).json({ 
       status: 'success',
-      token,
-      data: { user: name }
+      data: { token, user: { name: existingUser.name} }
     });
 };
 
+
+// GET /api/users/profile 取得個人資料
+const getUsersProfile = async (req, res) => {
+  
+  const { id } = req.user; 
+  const existingUser = await userRepository.findOneBy({ id });
+  
+  res.status(200).json({
+    status: 'success',
+    data: { user: {
+      name: existingUser.name, 
+      email: existingUser.email 
+    }}
+  })
+
+};
+
+// PUT /api/users/profile 更新本人的暱稱
+const putUsersProfile = async (req, res) => {
+  
+  const { id } = req.user; 
+  const { name } = req.body;
+  const existingUser = await userRepository.findOneBy({ id });
+  
+  // 1. 錯誤 400：檢查新名稱與目前名稱相同
+    if( existingUser.name === name ){
+      return res.status(400).json({
+        status: 'failed',
+        message: '使用者名稱未變更'
+      })
+    }
+
+  // 2. 錯誤 400：name 缺漏或為空字串
+    if ( !name?.trim() ) {
+        return res.status(400).json({
+          status: 'failed', 
+          message: `欄位未填寫正確`});  
+    };
+
+  // 3. 成功：更新使用者 name
+    const updatedResult = await userRepository.update({ id }, { name }); 
+    const UpdatedUser = await userRepository.findOneBy({ id });
+
+    return res.status(200).json({
+      status: 'success',
+      data: { user: {
+        name: UpdatedUser.name,  
+      }}
+    })
+
+  // 4. 錯誤 400：更新沒有生效（極少見的邊角情況）
+
+    if(updatedResult.affected === 0) {
+      return res.status(400).json({ 
+        status: 'failed',
+        message: '更新使用者資料失敗' });
+    }
+ 
+};
+
+// PUT /api/users/password 修改本人的登入密碼
+const putUsersPassword = async (req, res) => {
+
+  const { id } = req.user
+  const { password, new_password, confirm_new_password } = req.body; 
+  const existingUser = await userRepository.findOneBy({ id });
+  
+  // 1. 錯誤 400：三個欄位任一缺漏或為空字串
+    if ( !password?.trim() || !new_password?.trim() || !confirm_new_password?.trim() ) {
+        return res.status(400).json({
+          status: 'failed', 
+          message: `欄位未填寫正確`});  
+    };
+
+  // 2. 錯誤 400：密碼不符合規則，需要包含英文數字大小寫，最短8個字，最長16個字
+    if( !validatePassword(new_password) ){
+        return res.status(400).json({
+            status: 'failed', 
+            message: `密碼不符合規則，需要包含英文數字大小寫，最短8個字，最長16個字`}); 
+    };
+
+  // 3. 錯誤 400：新密碼與確認新密碼不一致
+    if( new_password !== confirm_new_password){
+      return res.status(400).json({
+        status: 'failed', 
+        message: `新密碼與驗證新密碼不一致`
+      });
+    };
+
+  // 4. 錯誤 400：舊密碼比對錯誤
+    const isMatch = await bcrypt.compare(password , existingUser.password);
+    if( !isMatch ){
+      return res.status(400).json({
+          status: 'failed', 
+          message: `密碼輸入錯誤`});
+      }
+
+  // 5. 錯誤 400：新密碼與舊密碼相同
+    const isSame = await bcrypt.compare(new_password, existingUser.password);
+    if( isSame ){
+        return res.status(400).json({
+          status: 'failed', 
+          message: `新密碼不能與舊密碼相同`});
+    };
+
+  // 6. 修改密碼
+
+    // a. 產生 Salt（rounds = 10）
+      const salt = await bcrypt.genSalt(10);
+    // b. 將密碼加鹽雜湊後儲存（模擬存入資料庫）
+      const hashedPassword = await bcrypt.hash( new_password, salt );
+    // c. 將新密碼更新存進 user
+      userRepository.update({ id }, { password: hashedPassword });  
+      return res.status(200).json({
+              status: 'success', 
+              data: null });
+
+};
+
+
+
 module.exports = {
   postUsersSignup,
-  postUsersLogin
-  
+  postUsersLogin,
+  getUsersProfile,
+  putUsersProfile,
+  putUsersPassword
 };

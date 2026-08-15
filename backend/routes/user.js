@@ -1,14 +1,14 @@
 const express = require('express');
 const router = express.Router();
 
-const userPackageController = require('../controllers/userController');
-// 待改 const checkPackageBody = require('../middlewares/checkPackageBody');
+const userController = require('../controllers/userController');
+const verifyToken = require('../middlewares/verifyToken');
 
-
-// router.get('/', creditPackageController.getPackages);
-router.post('/', userController.postUsersSignup);
-router.post('/', userController.postUsersLogin);
-// router.delete('/:creditPackageId', checkPackageId, creditPackageController.deletePackages);
+router.post('/signup', userController.postUsersSignup);
+router.post('/login', userController.postUsersLogin);
+router.get('/profile', verifyToken, userController.getUsersProfile);
+router.put('/profile', verifyToken, userController.putUsersProfile);
+router.put('/password', verifyToken, userController.putUsersPassword);
 
  
 
