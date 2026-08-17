@@ -39,7 +39,6 @@ const postSkills = async (req, res) => {
 };
 
 // DELETE /api/coaches/skill/{skillId} 刪除教練技能
-  // 使用軟刪除
 
 const deleteSkills = async (req, res) => {
   
@@ -56,11 +55,7 @@ const deleteSkills = async (req, res) => {
   
   // 2. 刪除技能
 
-  const result = await skillRepository.softDelete( skillId );
-  const softDeletedSkill = await skillRepository.findOne({
-    where: { id: skillId },
-    withDeleted: true,
-  });
+  const result = await skillRepository.delete( skillId );
 
   res.status(200).json({
     status: 'success',

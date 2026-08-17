@@ -44,7 +44,6 @@ const postPackages = async (req, res) => {
 };
 
 // DELETE /api/credit-package/{creditPackageId} 刪除購買方案
-  // 使用軟刪除
 
 const deletePackages = async (req, res) => {
   
@@ -60,11 +59,7 @@ const deletePackages = async (req, res) => {
   }  
   
   // 2. 刪除方案
-  const result = await packageRepository.softDelete( creditPackageId );
-  const softDeletedPackage = await packageRepository.findOne({
-    where: { id: creditPackageId },
-    withDeleted: true,
-  });
+  const result = await packageRepository.delete( creditPackageId );
 
   res.status(200).json({
     status: 'success',

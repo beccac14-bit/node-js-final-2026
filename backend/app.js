@@ -7,6 +7,7 @@ const errorHandler = require('./middlewares/errorHandler');
 const skillRouter = require('./routes/skill');
 const packageRouter = require('./routes/credit_package');
 const userRouter = require('./routes/user');
+const adminRouter = require('./routes/admin');
 
 app.use(cors());
 app.use(express.json());
@@ -19,6 +20,12 @@ app.use('/api/credit-package', packageRouter);
 
 // POST 註冊新會員帳號、會員登入、GET 取得個人資料、PUT 更新本人的暱稱、PUT 修改本人的登入密碼
 app.use('/api/users', userRouter);
+
+// POST 將指定使用者升級為教練、GET 取得教練本人的後台資料（含技能清單）、PUT 更新教練本人的後台資料（含整批更換技能）
+// GET 取得教練本人開設的全部課程列表、POST 教練開設新課程
+// GET 取得單一課程詳情、PUT 更新單一課程
+app.use('/api/admin/coaches', adminRouter);
+
 
 
 

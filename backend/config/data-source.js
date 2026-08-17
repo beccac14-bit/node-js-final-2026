@@ -3,6 +3,10 @@ const { DataSource } = require('typeorm');
 const skill = require('../entities/skill');
 const creditPackage = require('../entities/credit_package');
 const user = require('../entities/user');
+const coach = require('../entities/coach');
+const coach_link_skill = require('../entities/coach_link_skill');
+const course = require('../entities/course');
+const course_booking = require('../entities/course_booking');
 
 
 const dataSource = new DataSource({
@@ -16,7 +20,7 @@ const dataSource = new DataSource({
     // .env 裡的 DB_SYNCHRONIZE=true 讀進來是字串 "true"，要用 === 'true' 轉成布林值。
     // 這個設定打開後，TypeORM 會根據我們寫的 Entity 自動建立資料表，剛好對應作業要求的「啟動時要把空資料庫的表建好」
   ssl: process.env.DB_ENABLE_SSL === 'true',
-  entities: [ skill, creditPackage, user ],
+  entities: [ skill, creditPackage, user, coach, coach_link_skill, course, course_booking ],
 });
 
 module.exports = dataSource;
