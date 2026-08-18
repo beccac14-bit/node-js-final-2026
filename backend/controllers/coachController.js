@@ -7,7 +7,7 @@ const checkSkillId = require('../middlewares.checkSkillId');
 // const { In, IsNull  } = require('typeorm');
 
 // GET 取得教練分頁列表 /api/coaches
-const getCoachesList = (req, res) => {
+const getCoachesList = async (req, res) => {
 
   const per = Number(req.query.per);
   const page = Number(req.query.page);
@@ -53,11 +53,13 @@ const getCoachesList = (req, res) => {
 };
 
 // GET /api/coaches/{coachId} 取得單一教練詳細資料（公開，不用登入）
-const getSpecificCoach = (req, res) => {
-  const coachId = req.params;
+const getSpecificCoach = async (req, res) => {
+  const { coachId } = req.params;
 
   // 1. 錯誤 400：coachId 為空或無效字串
-  if( !checkSkillId ){
+  const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+ 
+  if( !coachId || !coachId.trim() === '' || UUID_REGEX.test(coachId) ){
     return res.status(400).json({
       status: 'failed', 
       message: '欄位未填寫正確'
@@ -75,11 +77,14 @@ const getSpecificCoach = (req, res) => {
   
   // 3. 取教練的 skills 拼成字串陣列 
   const existingUser = await userRepository.findOneBy({ id: existingCoach.user_id });
-  const links = await coachLinkSkillRepository.find({ where: { coach_id: coachId } });
+  const links = await coachLinkSkillRepository.find({ 
+    where: { coach_id: coachId },
+    relations: ['skill']
+  });
   const skill_names = links.map( (link) => link.name );
 
   res.status(200).json({
-    status: 'failed',
+    status: 'success',
     data: { 
       user: {
         name: existingUser.name,
@@ -99,8 +104,7 @@ const getSpecificCoach = (req, res) => {
   });
   
 };
-  
-};
+
 
 
                     
