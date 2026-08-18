@@ -3,7 +3,8 @@ const router = express.Router();
 const dataSource = require('../config/data-source');
 const coachRepository = dataSource.getRepository('Coach');
 const coachLinkSkillRepository = dataSource.coachLinkSkillRepository('CoachLinkSkill');
-const checkSkillId = require('../middlewares.checkSkillId');
+const courseRepository = dataSource.getRepository('Course');
+import { MoreThan } from 'typeorm';
 // const { In, IsNull  } = require('typeorm');
 
 // GET 取得教練分頁列表 /api/coaches
@@ -79,7 +80,7 @@ const getSpecificCoach = async (req, res) => {
   const existingUser = await userRepository.findOneBy({ id: existingCoach.user_id });
   const links = await coachLinkSkillRepository.find({ 
     where: { coach_id: coachId },
-    relations: ['skill']
+    relations: { skill: true } 
   });
   const skill_names = links.map( (link) => link.name );
 
@@ -105,6 +106,53 @@ const getSpecificCoach = async (req, res) => {
   
 };
 
+
+// GET api/coaches/{coachId}/courses 取得指定教練「未結束」的課程列表（公開，不用登入）
+const getSpecificCoachCourseList = async (req, res) => {
+
+  const { coachId } = req.params;
+  
+  // 1. 錯誤 400：coachId 為空或無效字串
+  const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+ 
+  if( !coachId || !coachId.trim() === '' || UUID_REGEX.test(coachId) ){
+    return res.status(400).json({
+      status: 'failed', 
+      message: '欄位未填寫正確'
+    });
+  };
+
+  // 2. 錯誤 400：查無此教練
+  const existingCoach = await coachRepository.findOneBy({ id: coachId });
+  if( !existingCoach ){
+    return res.status(400).json({
+      status: 'failed',
+      message: '找不到該教練'
+    });
+  };
+
+  const ongoingCourses = await courseRepository.find( where: { coach_id: coachId, end_at: MoreThan(now) } ); 
+  驗證 uuid 格式（空、uuid REGEX）
+  比對 coachid
+  比對時間要未結束 end_at > now（未結束，含尚未開始的課）
+
+  回傳的有可能是空陣列
+
+  res.status(200).json({
+    status: 'success',
+    data: [{}]
+    id: "5f2c1a9e-7b3d-4e8f-9a0b-1c2d3e4f5a6b"
+                    name: "晨間瑜伽"
+                    description: "適合新手的伸展課程"
+                    start_at: "2026-08-20T10:00:00.000Z"
+                    end_at: "2026-08-20T12:00:00.000Z"
+                    max_participants: 10
+                    coach_name: "肌肉小美"
+                    skill_name: "瑜伽"
+
+    
+  })
+}
 
 
                     
