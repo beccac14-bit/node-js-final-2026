@@ -6,7 +6,7 @@ const coachLinkSkillRepository = dataSource.coachLinkSkillRepository('CoachLinkS
 const courseRepository = dataSource.getRepository('Course');
 const { MoreThan } = require('typeorm');
 
-// GET 取得教練分頁列表 /api/coaches
+// GET 取得教練分頁列表 /api/coaches（公開，不用登入）
 const getCoachesList = async (req, res) => {
 
   const per = Number(req.query.per);
