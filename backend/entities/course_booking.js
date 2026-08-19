@@ -1,7 +1,7 @@
 const { EntitySchema } = require('typeorm')
 
 module.exports = new EntitySchema({
-  name: 'Coursebooking',
+  name: 'CourseBooking',
   tableName: 'COURSE_BOOKING',
   columns: {
    id: {
