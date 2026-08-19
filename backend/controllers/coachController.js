@@ -4,8 +4,7 @@ const dataSource = require('../config/data-source');
 const coachRepository = dataSource.getRepository('Coach');
 const coachLinkSkillRepository = dataSource.coachLinkSkillRepository('CoachLinkSkill');
 const courseRepository = dataSource.getRepository('Course');
-import { MoreThan } from 'typeorm';
-// const { In, IsNull  } = require('typeorm');
+const { LessThanOrEqual, MoreThan } = require('typeorm');
 
 // GET 取得教練分頁列表 /api/coaches
 const getCoachesList = async (req, res) => {
@@ -60,7 +59,7 @@ const getSpecificCoach = async (req, res) => {
   // 1. 錯誤 400：coachId 為空或無效字串
   const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
  
-  if( !coachId || !coachId.trim() === '' || UUID_REGEX.test(coachId) ){
+  if( !coachId || coachId.trim() === '' || !UUID_REGEX.test(coachId) ){
     return res.status(400).json({
       status: 'failed', 
       message: '欄位未填寫正確'
@@ -115,7 +114,7 @@ const getSpecificCoachCourseList = async (req, res) => {
   // 1. 錯誤 400：coachId 為空或無效字串
   const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
  
-  if( !coachId || !coachId.trim() === '' || UUID_REGEX.test(coachId) ){
+  if( !coachId?.trim() || UUID_REGEX.test(coachId) ){
     return res.status(400).json({
       status: 'failed', 
       message: '欄位未填寫正確'
@@ -131,33 +130,88 @@ const getSpecificCoachCourseList = async (req, res) => {
     });
   };
 
-  const ongoingCourses = await courseRepository.find( where: { coach_id: coachId, end_at: MoreThan(now) } ); 
-  驗證 uuid 格式（空、uuid REGEX）
-  比對 coachid
-  比對時間要未結束 end_at > now（未結束，含尚未開始的課）
+  // 3. 找出該教練尚未結束的課程，並透過 relation 取出 skill.name 跟 coach.name
+  const now = new Date();
+  const ongoingCourses = await courseRepository.find({   // 如果無資料會回傳空陣列
+      where: { coach_id: coachId, end_at: MoreThan(now) },
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        start_at: true,
+        end_at: true,
+        max_participants: true,
+        coach: { user: { name: true }},
+        skill: { name: true }
+      },
+      relations: {
+        coach: { user: true },
+        skill: true
+      },
+  }); 
 
-  回傳的有可能是空陣列
-
+  // 4. 用 map 組出要回覆的內容
+  const result = ongoingCourses.map( course => ({ // 空陣列 map 出來也是空陣列，因此不需要多加一層 .length===0 的判斷
+      id: course.id,
+      name: course.name,
+      description: course.description,
+      start_at: course.start_at,
+      end_at: course.end_at,
+      max_participants: course.max_participants,
+      coach_name: course.coach.user.name,
+      skill_name: course.skill.name,
+  }));
+                                
   res.status(200).json({
     status: 'success',
-    data: [{}]
-    id: "5f2c1a9e-7b3d-4e8f-9a0b-1c2d3e4f5a6b"
-                    name: "晨間瑜伽"
-                    description: "適合新手的伸展課程"
-                    start_at: "2026-08-20T10:00:00.000Z"
-                    end_at: "2026-08-20T12:00:00.000Z"
-                    max_participants: 10
-                    coach_name: "肌肉小美"
-                    skill_name: "瑜伽"
+    data: result    
+  });
+};
 
-    
-  })
-}
+// GET　/api/courses:　取得全站「進行中」的課程列表（公開，不用登入）
+const getCourseList = async (req, res) => {
 
+  const now = new Date();
+  const ongoingCourses = await courseRepository.find({   // 如果無資料會回傳空陣列
+      where: { start_at: LessThanOrEqual(now), end_at: MoreThan(now), }, // 判斷標準：start_at <= 現在時間 < end_at。
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        start_at: true,
+        end_at: true,
+        max_participants: true,
+        coach: { user: { name: true }},
+        skill: { name: true }
+      },
+      relations: {
+        coach: { user: true },
+        skill: true
+      },
+  }); 
+
+  const result = ongoingCourses.map( course => ({ // 空陣列 map 出來也是空陣列，因此不需要多加一層 .length===0 的判斷
+        id: course.id,
+        name: course.name,
+        description: course.description,
+        start_at: course.start_at,
+        end_at: course.end_at,
+        max_participants: course.max_participants,
+        coach_name: course.coach.user.name,
+        skill_name: course.skill.name,
+    }));
+  
+   res.status(200).json({
+     status: 'success',
+     data: result    
+   });
+               
+};
 
                     
-
 module.exports = {
   getCoachesList,
-  getSpecificCoach
+  getSpecificCoach,
+  getSpecificCoachCourseList,
+  getCourseList
 }
