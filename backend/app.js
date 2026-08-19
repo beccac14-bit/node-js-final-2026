@@ -8,6 +8,8 @@ const skillRouter = require('./routes/skill');
 const packageRouter = require('./routes/credit_package');
 const userRouter = require('./routes/user');
 const adminRouter = require('./routes/admin');
+const coachRouter = require('./routes/coach');
+const courseRouter = require('./routes/course');
 
 app.use(cors());
 app.use(express.json());
@@ -26,8 +28,12 @@ app.use('/api/users', userRouter);
 // GET 取得單一課程詳情、PUT 更新單一課程
 app.use('/api/admin/coaches', adminRouter);
 
+// GET 取得指定教練「未結束」的課程列表（公開，不用登入）
+// GET 取得單一教練詳細資料（公開，不用登入）、GET 取得教練分頁列表 /api/coaches（公開，不用登入）
+app.use('/api/coaches', coachRouter);
 
-
+// GET　/api/courses　取得全站「進行中」的課程列表（公開，不用登入）
+app.use('/api/course', courseRouter);
 
 
 
