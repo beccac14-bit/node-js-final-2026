@@ -2,7 +2,9 @@ const express = require('express');
 const router = express.Router();
 const dataSource = require('../config/data-source');
 const courseRepository = dataSource.getRepository('Course');
-const { LessThanOrEqual, MoreThan } = require('typeorm');
+const courseBookingRepository = dataSource.getRepository('CourseBooking');
+const creditPackagePurchaseRepository = dataSource.getRepository('CreditPackagePurchase');
+const { LessThanOrEqual, MoreThan, IsNull } = require('typeorm');
 
 // GET　/api/courses　取得全站「進行中」的課程列表（公開，不用登入）
 const getCourseList = async (req, res) => {
@@ -43,6 +45,56 @@ const getCourseList = async (req, res) => {
    });
                
 };
+
+
+// POST 報名課程（學員用 token 報名一門課，最容易踩雷）
+const postCourse = async (req, res) => {
+  
+  // 1. 錯誤 400：courseId 查無此課程
+  const { courseId } = req.params;
+  const existingCourse = await courseRepository.findOneBy( {id: courseId} );
+  if( !existingCourse ){
+    return res.status(400).json({
+       status: "failed",
+      message: "ID錯誤"
+    });
+  };
+
+  // 2. 錯誤 400： 這位使用者對這門課已有報名紀錄（包含已取消的紀錄）
+  const { userId } = req.user;
+  const alreadyBooked = await courseBookingRepository.find( { where: { user_id: userId, course_id: courseId }} );
+  
+  if( alreadyBooked ){
+    return res.status(400).json({
+       status: "failed",
+      message: "已經報名過此課程"
+    });
+  };
+
+  // 3. 錯誤 400：剩餘堂數歸零，已無可使用堂數
+
+    // a. 先查 user 購買的所有堂數
+    const creditPackageUserBuy = await creditPackagePurchaseRepository.find({ where: { user_id: userId } });
+
+    // b. 再查 user 報名的課程（排除已取消）
+    const coursesUserBooked = await courseBookingRepository.find({ 
+      where: { user_id: userId, 
+              course_id: courseId,
+             cancelled_at: IsNull() };
+    });
+
+    // c. 接著相減得出剩餘的堂數
+    const creditLeft:creditPackageUserBuy.length - coursesUserBooked.length
+    
+- 錯誤檢查順序（順序也要照做，先中的先回）：
+            
+            ②
+            
+            ④ 這門課目前的有效報名人數已達名額上限 → 400「已達最大參加人數，無法參加」
+            全部通過 → 建立報名紀錄，回 201、data 為 null。
+  
+}
+
 
 module.exports = {
   getCourseList
