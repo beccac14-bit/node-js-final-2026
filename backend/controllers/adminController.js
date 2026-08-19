@@ -6,7 +6,7 @@ const coachRepository = dataSource.getRepository('Coach');
 const coachLinkSkillRepository = dataSource.getRepository('CoachLinkSkill');
 const skillRepository = dataSource.getRepository('Skill');
 const courseRepository = dataSource.getRepository('Course');
-const courseBookingRepository = dataSource.getRepository('Coursebooking');
+const courseBookingRepository = dataSource.getRepository('CourseBooking');
 const { In, IsNull  } = require('typeorm');
 
 
