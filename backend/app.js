@@ -33,7 +33,7 @@ app.use('/api/admin/coaches', adminRouter);
 app.use('/api/coaches', coachRouter);
 
 // GET 取得全站「進行中」的課程列表（公開，不用登入）
-app.use('/api/course', courseRouter);
+app.use('/api/courses', courseRouter);
 
 
 

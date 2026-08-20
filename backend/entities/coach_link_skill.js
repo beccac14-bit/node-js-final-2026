@@ -29,25 +29,21 @@ module.exports = new EntitySchema({
     columns: ['coach_id', 'skill_id']
   }],
   relations: {
-    Coach: {
+    coach: {
       target: 'Coach',
       type: 'many-to-one',
       inverseSide: 'CoachLinkSkill',
       joinColumn: {
         name: 'coach_id',
-        referencedColumnName: 'id',
-        foreignKeyConstraintName: 'coach_link_skill_coach_id_fk',
         onDelete: 'CASCADE'
       },
       cascade: false
     },
-    Skill: {
+    skill: {
       target: 'Skill',
       type: 'many-to-one',
       joinColumn: {
         name: 'skill_id',
-        referencedColumnName: 'id',
-        foreignKeyConstraintName: 'coach_link_skill_skill_id_fk',
         onDelete: 'CASCADE'
       },
       cascade: false

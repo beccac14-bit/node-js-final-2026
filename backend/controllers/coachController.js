@@ -2,8 +2,9 @@ const express = require('express');
 const router = express.Router();
 const dataSource = require('../config/data-source');
 const coachRepository = dataSource.getRepository('Coach');
-const coachLinkSkillRepository = dataSource.coachLinkSkillRepository('CoachLinkSkill');
+const coachLinkSkillRepository = dataSource.getRepository('CoachLinkSkill');
 const courseRepository = dataSource.getRepository('Course');
+const userRepository = dataSource.getRepository('User');
 const { MoreThan } = require('typeorm');
 
 // GET 取得教練分頁列表 /api/coaches（公開，不用登入）
@@ -14,8 +15,8 @@ const getCoachesList = async (req, res) => {
 
   // 1. 錯誤 400：觸發條件：缺 per 或 page、或其中任何一個不是可轉成非負整數的字串
   if (
-    req.query.per === undefined ||
-    req.query.page === undefined ||
+    !req.query.per ||
+    !req.query.page ||
     !Number.isInteger(per) || per < 0 ||
     !Number.isInteger(page) || page < 0
   ){
@@ -32,8 +33,12 @@ const getCoachesList = async (req, res) => {
     select: {
       id: true,
       user_id: true,
-      name: true,
+      user: { name: true },
     },
+    relations: { 
+      user: true 
+    }
+    ,
       skip: (page - 1) * per,
       take: per,
     });
@@ -42,7 +47,7 @@ const getCoachesList = async (req, res) => {
   const data = coaches.map((coach) => ({
     id: coach.id, // 教練 id（uuid，拿這個去查教練詳情）
     user_id: coach.user_id, // 這位教練對應的使用者 id（uuid）
-    name: coach.name, // 教練名字
+    name: coach.user.name, // 教練名字
   }));  
   
   return res.status(200).json({
@@ -59,7 +64,7 @@ const getSpecificCoach = async (req, res) => {
   // 1. 錯誤 400：coachId 為空或無效字串
   const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
  
-  if( !coachId || coachId.trim() === '' || !UUID_REGEX.test(coachId) ){
+  if( !coachId?.trim() || !UUID_REGEX.test(coachId) ){
     return res.status(400).json({
       status: 'failed', 
       message: '欄位未填寫正確'
@@ -81,7 +86,7 @@ const getSpecificCoach = async (req, res) => {
     where: { coach_id: coachId },
     relations: { skill: true } 
   });
-  const skill_names = links.map( (link) => link.name );
+  const skill_names = links.map( (link) => link.skill.name );
 
   res.status(200).json({
     status: 'success',
@@ -100,7 +105,7 @@ const getSpecificCoach = async (req, res) => {
         updated_at: existingCoach.updated_at,
         skills: skill_names
       }
-    };       
+    }       
   });
   
 };
@@ -114,7 +119,7 @@ const getSpecificCoachCourseList = async (req, res) => {
   // 1. 錯誤 400：coachId 為空或無效字串
   const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
  
-  if( !coachId?.trim() || UUID_REGEX.test(coachId) ){
+  if( !coachId?.trim() || !UUID_REGEX.test(coachId) ){
     return res.status(400).json({
       status: 'failed', 
       message: '欄位未填寫正確'
@@ -141,13 +146,13 @@ const getSpecificCoachCourseList = async (req, res) => {
         start_at: true,
         end_at: true,
         max_participants: true,
-        coach: { user: { name: true }},
+        coach: { id: true, user: { name: true }},
         skill: { name: true }
       },
       relations: {
         coach: { user: true },
         skill: true
-      },
+      }
   }); 
 
   // 4. 用 map 組出要回覆的內容
