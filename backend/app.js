@@ -32,7 +32,7 @@ app.use('/api/admin/coaches', adminRouter);
 // GET 取得單一教練詳細資料（公開，不用登入）、GET 取得教練分頁列表 /api/coaches（公開，不用登入）
 app.use('/api/coaches', coachRouter);
 
-// GET 取得全站「進行中」的課程列表（公開，不用登入）
+// GET 取得全站「進行中」的課程列表（公開，不用登入）、POST 報名課程
 app.use('/api/courses', courseRouter);
 
 

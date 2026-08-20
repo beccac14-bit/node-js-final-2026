@@ -31,7 +31,7 @@ module.exports = new EntitySchema({
       joinColumn: { name: 'user_id' },
     },
     package: {
-      target: 'CreditPackage',
+      target: 'Credit_package',
       type: 'many-to-one',
       joinColumn: { name: 'package_id' },
     },
