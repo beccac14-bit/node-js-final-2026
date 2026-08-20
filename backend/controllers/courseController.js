@@ -55,8 +55,8 @@ const postCourse = async (req, res) => {
   const existingCourse = await courseRepository.findOneBy( {id: courseId} );
   if( !existingCourse ){
     return res.status(400).json({
-       status: "failed",
-      message: "ID錯誤"
+       status: 'failed',
+      message: 'ID錯誤'
     });
   };
 
@@ -66,8 +66,8 @@ const postCourse = async (req, res) => {
   
   if( alreadyBooked ){
     return res.status(400).json({
-       status: "failed",
-      message: "已經報名過此課程"
+       status: 'failed',
+      message: '已經報名過此課程'
     });
   };
 
@@ -84,13 +84,37 @@ const postCourse = async (req, res) => {
     });
 
     // c. 接著相減得出剩餘的堂數
-    const creditLeft:creditPackageUserBuy.length - coursesUserBooked.length
+    const creditUserLeft = creditPackageUserBuy.length - coursesUserBooked.length;
+    if( creditUserLeft === 0 ){
+      return res.status(400).json({
+        status: 'failed',
+        message: '已無可使用堂數'
+      })
+    };
+
+  // 4. 錯誤 400：這門課目前的有效報名人數已達名額上限
+    // a. 這堂課未取消的已報名數量
+    const courseBookingCount = courseBookingRepository.find({ 
+      where: { course_id: courseId, 
+              IsNull(cancelled_at) } 
+    });
+    // b. 取出這堂課程最大的報名人數
+    const courseMaxParticipantsObj = await courseRepository.findOne({
+      where: { id: courseId },
+      select: { max_participants: true }
+    });
+    // c. 如果 未取消的已報名數量 = 課程最大的報名人數，代表已額滿
+    if( courseBookingCount.length === courseMaxParticipantsObj.max_participants ){
+      return res.status(400).json({
+        status: 'failed',
+        message: '已達最大參加人數，無法參加'
+      })
+    };
+  
     
 - 錯誤檢查順序（順序也要照做，先中的先回）：
             
-            ②
-            
-            ④ 這門課目前的有效報名人數已達名額上限 → 400「已達最大參加人數，無法參加」
+    
             全部通過 → 建立報名紀錄，回 201、data 為 null。
   
 }
