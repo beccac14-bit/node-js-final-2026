@@ -4,6 +4,7 @@ const jwt = require('jsonwebtoken');
 const router = express.Router();
 const dataSource = require('../config/data-source');
 const userRepository = dataSource.getRepository('User');
+const creditPackagePurchaseRepository = dataSource.getRepository('CreditPackagePurchase');
 const { validatePassword } = require('../utils/validate');
 
 
@@ -236,6 +237,45 @@ const putUsersPassword = async (req, res) => {
 };
 
 
+// GET /api/users/credit-package 取得本人的購買方案紀錄
+const getUserCreditPackage = await async (req, res) => {
+
+  const { id: userId } = req.user;
+  const userCreditPackage = await creditPackagePurchaseRepository.find({ 
+    where: { user_id: userId },
+    // package 是 relations 裡定義的關聯屬性名稱，
+    // 指定要從關聯的 Credit_package 表裡撈出哪些欄位
+    select: {
+        buy_at: true,
+        package: { 
+          name: true, 
+          credit_amount: true, 
+          price: true}
+      },
+    // relations：告訴 TypeORM 要 join 哪張關聯表
+    // key（package）要對應到 credit_package_purchase.js 裡 relations 定義的屬性名稱
+    relations: {
+      package: true
+    },
+    order: {
+      buy_at: 'DESC', // 依 buy_at 新到舊排序（最新的排最前面）
+    },
+  });
+
+  const result = userCreditPackage.map( item => ({
+      name: item.package.name
+      purchased_credits: item.package.credit_amount,
+      price_paid: item.package.price,
+      purchase_at: item.buy_at
+  }));
+
+  
+  res.status(200).json({
+    status: 'success', 
+    data: result
+  });
+
+};
 
 module.exports = {
   postUsersSignup,
