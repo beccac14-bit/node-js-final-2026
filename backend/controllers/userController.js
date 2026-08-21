@@ -282,5 +282,6 @@ module.exports = {
   postUsersLogin,
   getUsersProfile,
   putUsersProfile,
-  putUsersPassword
+  putUsersPassword,
+  getUserCreditPackage
 };
