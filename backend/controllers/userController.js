@@ -5,6 +5,7 @@ const router = express.Router();
 const dataSource = require('../config/data-source');
 const userRepository = dataSource.getRepository('User');
 const creditPackagePurchaseRepository = dataSource.getRepository('CreditPackagePurchase');
+const courseBookingRepository = dataSource.getRepository('CourseBooking');
 const { validatePassword } = require('../utils/validate');
 
 
@@ -238,7 +239,7 @@ const putUsersPassword = async (req, res) => {
 
 
 // GET /api/users/credit-package 取得本人的購買方案紀錄
-const getUserCreditPackage = await async (req, res) => {
+const getUserCreditPackage = async async (req, res) => {
 
   const { id: userId } = req.user;
   const userCreditPackage = await creditPackagePurchaseRepository.find({ 
@@ -277,11 +278,67 @@ const getUserCreditPackage = await async (req, res) => {
 
 };
 
+// GET /api/users/courses 取得本人的課表與剩餘堂數
+const getUserBookedCoursesAndLeftCredits = async (req, res) => {
+
+  const { id: userId } = req.user;
+
+  // 1. 計算 credit_remain 和 credit_usage
+    // a. 先查 user 購買的所有堂數
+    const creditPackageUserBuy = await creditPackagePurchaseRepository.find({ where: { user_id: userId } });
+
+    // b. 再查 user 報名的課程（排除已取消）
+    const coursesUserBooked = await courseBookingRepository.find({ 
+      where: { user_id: userId, 
+             cancelled_at: IsNull() },
+      select: {
+        course_id: true,
+        cancelled_at: true,
+        course: { 
+          name: true,
+          start_at: true,
+          end_at: true,
+          meeting_url: true,
+          coach: { user: { name: true } }
+                },
+      },
+      relations: { 
+        course: { coach: { user: true } }
+      },
+      order: { start_at: 'ASC' }
+    });
+
+    // c. 接著相減得出剩餘的堂數
+    const creditUserLeft = creditPackageUserBuy.length - coursesUserBooked.length;
+  
+  const result = coursesUserBooked.map( item => ({
+    course_id: item.course_id ,
+    name: item.course.name,
+    start_at: item.course.start_at ,
+    end_at: item.course.end_at,
+    meeting_url: item.course.meeting_url,
+    coach_name: item.course.coach.user.name,
+    cancelled_at: item.cancelled_at,    
+  }));
+
+  res.status(200).json({
+    status: 'success', 
+    data: {
+      credit_remain: creditUserLeft,
+      credit_usage: coursesUserBooked.length,
+      course_booking: result
+    }  
+  });
+  
+};
+
+
 module.exports = {
   postUsersSignup,
   postUsersLogin,
   getUsersProfile,
   putUsersProfile,
   putUsersPassword,
-  getUserCreditPackage
+  getUserCreditPackage,
+  getUserBookedCoursesAndLeftCredits
 };
