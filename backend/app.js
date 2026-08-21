@@ -21,6 +21,7 @@ app.use('/api/coaches/skill', skillRouter);
 app.use('/api/credit-package', packageRouter);
 
 // POST 註冊新會員帳號、會員登入、GET 取得個人資料、PUT 更新本人的暱稱、PUT 修改本人的登入密碼
+// GET 取得本人的購買方案紀錄
 app.use('/api/users', userRouter);
 
 // POST 將指定使用者升級為教練、GET 取得教練本人的後台資料（含技能清單）、PUT 更新教練本人的後台資料（含整批更換技能）
