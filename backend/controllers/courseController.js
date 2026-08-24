@@ -130,13 +130,42 @@ const postCourse = async (req, res) => {
 
 // DELETE api/courses/{courseId} 取消課程報名（軟刪除：紀錄保留、標記取消、堂數自動歸還）
 const cancellBookedCourses = async (req, res) => {
-  // 錯誤 400：找不到「這位使用者對這門課、尚未取消」的報名紀錄（課程不存在／從未報名／已經取消過，三種情況都回這句） 
   
+  // 錯誤 400：找不到「這位使用者對這門課、尚未取消」的報名紀錄（課程不存在／從未報名／已經取消過，三種情況都回這句） 
+  const { id: userId } = req.user;
+  const { courseId } = req.params;
+  
+  const existingBooking = await courseBookingRepository.find({
+    where: {
+      user_id: userId, 
+      course_id: courseId,
+      cancelled_at: IsNull()
+    }
+  });
+
+  if( existingBooking.length === 0 ){ // 回傳的是空陣列算是 truthy，因此用長度來判斷是否有值
+    return res.status(400).json({
+        status: 'failed',
+        message: 'ID錯誤'
+      });
+  };
+
+  // 取消成功（報名紀錄被標記為已取消，堂數歸還）
+  await courseBookingRepository.update(
+    { id: existingBooking.id }, // 用前面找出的 existingBooking 的 id 抓出要更新的那筆資料
+    { cancelled_at: new Date() } // 更新資訊
+  );
+
+  res.status(200).json({
+          status: 'success',
+          data: null
+       });
 };
 
 module.exports = { 
   getCourseList,
-  postCourse
+  postCourse,
+  cancellBookedCourses
  };
 
 
