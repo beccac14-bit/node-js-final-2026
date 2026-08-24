@@ -34,6 +34,7 @@ app.use('/api/admin/coaches', adminRouter);
 app.use('/api/coaches', coachRouter);
 
 // GET 取得全站「進行中」的課程列表（公開，不用登入）、POST 報名課程
+// DELETE 取消課程報名（軟刪除：紀錄保留、標記取消、堂數自動歸還）
 app.use('/api/courses', courseRouter);
 
 
