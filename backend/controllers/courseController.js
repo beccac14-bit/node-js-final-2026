@@ -129,7 +129,7 @@ const postCourse = async (req, res) => {
 
 
 // DELETE api/courses/{courseId} 取消課程報名（軟刪除：紀錄保留、標記取消、堂數自動歸還）
-const cancellBookedCourses = async (req, res) => {
+const cancellBookedCourse = async (req, res) => {
   
   // 錯誤 400：找不到「這位使用者對這門課、尚未取消」的報名紀錄（課程不存在／從未報名／已經取消過，三種情況都回這句） 
   const { id: userId } = req.user;
@@ -165,7 +165,7 @@ const cancellBookedCourses = async (req, res) => {
 module.exports = { 
   getCourseList,
   postCourse,
-  cancellBookedCourses
+  cancellBookedCourse
  };
 
 
