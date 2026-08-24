@@ -12,11 +12,7 @@ router.post('/courses', verifyToken, adminController.postCoachCourses);
 router.post('/:userId', adminController.postAdminCoaches);
 router.get('/courses/:courseId', verifyToken, adminController.getCoachSpecificCourse);
 router.put('/courses/:courseId', verifyToken, adminController.putCoachSpecificCourse);
-
-
-
-
-
+router.get('/coaches/revenue', verifyToken, adminController.getCoachRevenue);
  
 
 module.exports = router;
