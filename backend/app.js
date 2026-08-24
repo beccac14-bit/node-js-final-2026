@@ -27,6 +27,7 @@ app.use('/api/users', userRouter);
 // POST 將指定使用者升級為教練、GET 取得教練本人的後台資料（含技能清單）、PUT 更新教練本人的後台資料（含整批更換技能）
 // GET 取得教練本人開設的全部課程列表、POST 教練開設新課程
 // GET 取得單一課程詳情、PUT 更新單一課程
+// GET 取得教練本人指定月份的營收統計
 app.use('/api/admin/coaches', adminRouter);
 
 // GET 取得指定教練「未結束」的課程列表（公開，不用登入）
