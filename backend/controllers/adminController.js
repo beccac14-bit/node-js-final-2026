@@ -429,6 +429,39 @@ const putCoachSpecificCourse = async (req, res) => {
     });
 };
 
+// GET /api/admin/coaches/revenue 取得教練本人指定月份的營收統計
+const getCoachRevenue = async (req, res) => {
+
+  // 錯誤 400：month 沒帶、或不是合法的英文小寫月份名（例如送了 6、June、2026-06）時觸發。
+
+    month = req.query
+ enum [january, february, march, april, may, june, july, august, september, october, november, december]
+
+  
+   return res.status(400).json({
+              status: 'failed',
+              message: '欄位未填寫正確',
+          });
+
+  //  1. 撈出教練本人的課程
+  const { id: userId } = req.user;
+  
+  
+
+
+
+  total: {
+    revenue: 0, // floor(該月未取消報名筆數 × 單堂均價)，單堂均價 = 全部方案 Σprice ÷ Σcredit_amount
+    participants: 0, // 該月不重複的報名學員數
+    course_count: 0 // 該月未取消的報名筆數（欄位名雖叫 course_count，語意是報名數）
+  }
+       
+                                           
+  
+};
+
+
+
 module.exports = {
   postAdminCoaches,
   getCoachProfile,
