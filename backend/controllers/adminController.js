@@ -7,6 +7,7 @@ const coachLinkSkillRepository = dataSource.getRepository('CoachLinkSkill');
 const skillRepository = dataSource.getRepository('Skill');
 const courseRepository = dataSource.getRepository('Course');
 const courseBookingRepository = dataSource.getRepository('CourseBooking');
+const creditPackageRepository = dataSource.getRepository('CreditPackage');
 const { In, IsNull  } = require('typeorm');
 
 
@@ -432,32 +433,98 @@ const putCoachSpecificCourse = async (req, res) => {
 // GET /api/admin/coaches/revenue 取得教練本人指定月份的營收統計
 const getCoachRevenue = async (req, res) => {
 
-  // 錯誤 400：month 沒帶、或不是合法的英文小寫月份名（例如送了 6、June、2026-06）時觸發。
-
-    month = req.query
- enum [january, february, march, april, may, june, july, august, september, october, november, december]
-
-  
-   return res.status(400).json({
-              status: 'failed',
-              message: '欄位未填寫正確',
-          });
-
-  //  1. 撈出教練本人的課程
+  // 錯誤 401：登入者 role 不是 COACH
   const { id: userId } = req.user;
+  const isCoach = await coachRepository.exists({ 
+    where: { user_id: userId } 
+  });
+
+  if( !isCoach ){
+    return res.status(401).json({
+      status: 'failed',
+      message: '使用者尚未成為教練'
+    });
+  };
   
+  // 錯誤 400：month 沒帶、或不是合法的英文小寫月份名（例如送了 6、June、2026-06）時觸發。
+  const { month } = req.query;
+  const monthMapping = {
+    january: 1, february: 2, march: 3, april: 4, may: 5, june: 6,
+    july: 7, august: 8, september: 9, october: 10, november: 11, december: 12
+  };
   
+  const monthNumber = monthMapping[month]; 
+    // 如果傳送不合法的英文月份，就會是 undefined
 
-
-
-  total: {
-    revenue: 0, // floor(該月未取消報名筆數 × 單堂均價)，單堂均價 = 全部方案 Σprice ÷ Σcredit_amount
-    participants: 0, // 該月不重複的報名學員數
-    course_count: 0 // 該月未取消的報名筆數（欄位名雖叫 course_count，語意是報名數）
+  if (!monthNumber) { 
+    return res.status(400).json({
+      status: 'failed',
+      message: '欄位未填寫正確'
+    });
   }
-       
-                                           
+
+  // 成功 200：教練沒有開過任何課
+  const hasCourse = await courseRepository.exists({
+    where: {
+      coach: { user_id: userId }
+    }
+  });
+
+  if (!hasCourse) {
+    return res.status(200).json({
+      status: 'success',
+      data: { 
+        total: {
+          revenue: 0,
+          participants: 0,
+          course_count: 0
+        }
+      }
+    });
+  };
   
+  // 1. 比對年份月份抓出該區間的報名紀錄
+  const year = new Date().getFullYear(); // 抓當下年份，例如 2026
+  const startDate = new Date(year, monthNumber-1, 1, 0, 0, 0, 0); // 這個月的第一天 00:00:00，new Date(year, monthIndex, day) 第二個參數是從 0 開始計算
+  const endDate = new Date(year, monthNumber, 0, 23, 59, 59, 999); // 這個月的最後一天 23:59:59.999，傳第 0 天它會自動往前推算成「上個月的最後一天」
+
+  const monthCourses = await courseBookingRepository.find({
+    where: {
+      cancelled_at: IsNull(),
+      booking_at: Between(startDate, endDate),
+      course: {
+        coach: { user_id: userId }
+      }
+    }
+  });
+
+  // 2. 計算：該月未取消的報名筆數
+  const courseCountResult = monthCourses.length;
+
+  // 3. 計算：不重複的報名學員數
+  const uniqueParticipants = new Set(monthCourses.map(item => item.user_id)).size; 
+    // .map 把每一筆報名紀錄的 user_id 抓出來組成陣列 → new Set 丟進 Set 去掉重複的 → .size 數一數剩下幾個不重複的值
+
+  // 4. 計算：floor(該月未取消報名筆數 × 單堂均價)，單堂均價 = 全部方案 Σprice ÷ Σcredit_amount（所有方案一起算，不是只算某一包））
+  const allCreditPackage = await creditPackageRepository.find();
+  const totalCreditAmount = allCreditPackage.reduce( (acc, cur) => acc + cur.credit_amount , 0 ); // 先算全部方案的 credit_amount
+  const totalPrice = allCreditPackage.reduce( (acc, cur) => acc + cur.price, 0 ); // 再算全部方案的 price
+  const averagePackagePrice = totalCreditAmount === 0 ? 0 : totalPrice / totalCreditAmount; // 避免 totalPrice / 0 得到 Infinity
+    // 補充：JS 0/2 會回傳 0，2/0 不會報錯，會回傳正無限大 Infinity
+
+  const revenueResult = Math.floor(averagePackagePrice * courseCountResult); // floor 該月未取消報名筆數 × 單堂均價
+  
+  res.status(200).json({
+    status: 'success',
+    data: {
+      total: {
+        revenue: revenueResult, // floor(該月未取消報名筆數 × 單堂均價)
+        participants: uniqueParticipants, // 該月不重複的報名學員數
+        course_count: courseCountResult // 該月未取消的報名筆數（欄位名雖叫 course_count，語意是報名數）
+      }
+    }
+  });
+                                            
 };
 
 
@@ -469,5 +536,6 @@ module.exports = {
   getCoachCourses,
   postCoachCourses,
   getCoachSpecificCourse,
-  putCoachSpecificCourse
+  putCoachSpecificCourse,
+  getCoachRevenue
 };
