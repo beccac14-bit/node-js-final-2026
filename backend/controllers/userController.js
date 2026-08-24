@@ -239,7 +239,7 @@ const putUsersPassword = async (req, res) => {
 
 
 // GET /api/users/credit-package 取得本人的購買方案紀錄
-const getUserCreditPackage = async async (req, res) => {
+const getUserCreditPackage = async (req, res) => {
 
   const { id: userId } = req.user;
   const userCreditPackage = await creditPackagePurchaseRepository.find({ 
