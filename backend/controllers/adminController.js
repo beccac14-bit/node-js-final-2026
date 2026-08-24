@@ -8,7 +8,7 @@ const skillRepository = dataSource.getRepository('Skill');
 const courseRepository = dataSource.getRepository('Course');
 const courseBookingRepository = dataSource.getRepository('CourseBooking');
 const creditPackageRepository = dataSource.getRepository('CreditPackage');
-const { In, IsNull  } = require('typeorm');
+const { In, IsNull, Between } = require('typeorm');
 
 
 // POST /api/admin/coaches/{userId} 將指定使用者升級為教練
