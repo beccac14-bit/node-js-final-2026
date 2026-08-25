@@ -19,9 +19,11 @@ const headerAuth = req.headers.authorization;
         // 2. 錯誤 401：token 已過期：「Token 已過期」
         if (err.name === 'TokenExpiredError'){  
             return res.status(401).json({ status: 'failed', message: 'Token 已過期' });
-        };
+        } 
         // 3. 錯誤 401：token 無效（內容不對、或查無此使用者）：
-        if(err.name === 'JsonWebTokenError'){
+        else if (err.name === 'JsonWebTokenError'){
+            return res.status(401).json({ status: 'failed', message: '無效的 token' });
+        } else {
             return res.status(401).json({ status: 'failed', message: '無效的 token' });
         }
     
