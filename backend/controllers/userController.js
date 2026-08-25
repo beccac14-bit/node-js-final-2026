@@ -157,24 +157,26 @@ const putUsersProfile = async (req, res) => {
           message: `欄位未填寫正確`});  
     };
 
-  // 3. 成功：更新使用者 name
+  // 3. 錯誤 400：更新沒有生效（極少見的邊角情況）
     const updatedResult = await userRepository.update({ id }, { name }); 
     const UpdatedUser = await userRepository.findOneBy({ id });
-
-    return res.status(200).json({
-      status: 'success',
-      data: { user: {
-        name: UpdatedUser.name,  
-      }}
-    })
-
-  // 4. 錯誤 400：更新沒有生效（極少見的邊角情況）
 
     if(updatedResult.affected === 0) {
       return res.status(400).json({ 
         status: 'failed',
         message: '更新使用者資料失敗' });
-    }
+    };
+
+  // 4. 成功：更新使用者 name
+    res.status(200).json({
+      status: 'success',
+      data: { 
+        user: {
+        name: UpdatedUser.name  
+        }
+      }
+    });
+
  
 };
 
@@ -230,7 +232,7 @@ const putUsersPassword = async (req, res) => {
     // b. 將密碼加鹽雜湊後儲存（模擬存入資料庫）
       const hashedPassword = await bcrypt.hash( new_password, salt );
     // c. 將新密碼更新存進 user
-      userRepository.update({ id }, { password: hashedPassword });  
+      await userRepository.update({ id }, { password: hashedPassword });  
       return res.status(200).json({
               status: 'success', 
               data: null });
