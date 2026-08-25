@@ -6,6 +6,6 @@ const verifyToken = require('../middlewares/verifyToken');
 
 router.get('/', courseController.getCourseList);
 router.post('/:courseId', verifyToken, courseController.postCourse);
-router.delete('/courseId', verifyToken, courseController.cancellBookedCourse);
+router.delete('/:courseId', verifyToken, courseController.cancellBookedCourse);
 
 module.exports = router;
