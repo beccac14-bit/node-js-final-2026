@@ -73,8 +73,17 @@ const postCourse = async (req, res) => {
 
   // 3. 錯誤 400：剩餘堂數歸零，已無可使用堂數
 
-    // a. 先查 user 購買的所有堂數
-    const creditPackageUserBuy = await creditPackagePurchaseRepository.find({ where: { user_id: userId } });
+    // a. 先查 user 購買的所有 package 並取出 credit_amount 進行加總
+    const creditPackageUserBuy = await creditPackagePurchaseRepository.find({ 
+      where: { user_id: userId },
+      relations: { CreditPackage: true },
+      select: {
+        CreditPacage: { credit_amount: true }
+      }
+    });
+
+    const totalCreditsUserbuy = creditPackageUserBuy.reduce( (acc, cur) => 
+     acc + cur.credit_amount , 0);
 
     // b. 再查 user 報名的課程（排除已取消）
     const coursesUserBooked = await courseBookingRepository.find({ 
@@ -84,8 +93,8 @@ const postCourse = async (req, res) => {
     });
 
     // c. 接著相減得出剩餘的堂數
-    const creditUserLeft = creditPackageUserBuy.length - coursesUserBooked.length;
-    if( creditUserLeft === 0 ){
+    const creditUserLeft = totalCreditsUserbuy - coursesUserBooked.length;
+    if( creditUserLeft <= 0 ){
       return res.status(400).json({
         status: 'failed',
         message: '已無可使用堂數'
