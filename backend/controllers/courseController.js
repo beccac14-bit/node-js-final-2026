@@ -144,7 +144,7 @@ const cancellBookedCourse = async (req, res) => {
   const { id: userId } = req.user;
   const { courseId } = req.params;
   
-  const existingBooking = await courseBookingRepository.find({
+  const existingBooking = await courseBookingRepository.findOne({
     where: {
       user_id: userId, 
       course_id: courseId,
@@ -152,7 +152,7 @@ const cancellBookedCourse = async (req, res) => {
     }
   });
 
-  if( existingBooking.length === 0 ){ // 回傳的是空陣列算是 truthy，因此用長度來判斷是否有值
+  if( existingBooking ){ // 如果沒有資料會回傳 null
     return res.status(400).json({
         status: 'failed',
         message: 'ID錯誤'
