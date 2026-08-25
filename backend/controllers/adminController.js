@@ -307,7 +307,7 @@ const postCoachCourses = async (req, res) => {
         status: 'success',
         data: {course: {
             id: savedCourse.id,
-            user_id: savedCourse.user_id,
+            user_id: userId,
             skill_id: savedCourse.skill_id,
             name: savedCourse.name,
             description: savedCourse.description,
