@@ -1,5 +1,5 @@
 const dataSource = require('../config/data-source');
-const packageRepository = dataSource.getRepository('Credit_package');
+const packageRepository = dataSource.getRepository('CreditPackage');
 
 // GET /api/credit_package 取得購買方案列表
 const getPackages = async (req, res) => {
