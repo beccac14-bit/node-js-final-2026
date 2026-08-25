@@ -264,7 +264,7 @@ const getUserCreditPackage = async (req, res) => {
   });
 
   const result = userCreditPackage.map( item => ({
-      name: item.package.name
+      name: item.package.name,
       purchased_credits: item.package.credit_amount,
       price_paid: item.package.price,
       purchase_at: item.buy_at
