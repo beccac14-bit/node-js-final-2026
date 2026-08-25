@@ -49,7 +49,7 @@ app.get('/healthcheck', (req, res) => {
 
 app.use(errorHandler);
 
-const port = process.env.PORT;
+const port = process.env.PORT || 8080;
 
 AppDataSource.initialize()
   .then(() => {
