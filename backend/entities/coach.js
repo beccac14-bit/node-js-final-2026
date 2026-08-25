@@ -43,7 +43,7 @@ module.exports = new EntitySchema({
     CoachLinkSkill: {
       target: 'CoachLinkSkill',
       type: 'one-to-many',
-      inverseSide: 'Coach'
+      inverseSide: 'coach'
     }
   },
 })
