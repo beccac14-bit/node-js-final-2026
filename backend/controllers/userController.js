@@ -7,7 +7,7 @@ const userRepository = dataSource.getRepository('User');
 const creditPackagePurchaseRepository = dataSource.getRepository('CreditPackagePurchase');
 const courseBookingRepository = dataSource.getRepository('CourseBooking');
 const { validatePassword } = require('../utils/validate');
-
+const { IsNull } = require('typeorm');
 
 // POST /api/users/signup 註冊新會員帳號
 const postUsersSignup = async (req, res) => {
