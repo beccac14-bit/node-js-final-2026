@@ -76,9 +76,9 @@ const postCourse = async (req, res) => {
     // a. 先查 user 購買的所有 package 並取出 credit_amount 進行加總
     const creditPackageUserBuy = await creditPackagePurchaseRepository.find({ 
       where: { user_id: userId },
-      relations: { CreditPackage: true },
+      relations: { package: true },
       select: {
-        CreditPacage: { credit_amount: true }
+        package: { credit_amount: true }
       }
     });
 
@@ -152,7 +152,7 @@ const cancellBookedCourse = async (req, res) => {
     }
   });
 
-  if( existingBooking ){ // 如果沒有資料會回傳 null
+  if( !existingBooking ){ // 如果沒有資料會回傳 null
     return res.status(400).json({
         status: 'failed',
         message: 'ID錯誤'
