@@ -50,7 +50,7 @@ const userBuyPackage = async (req, res) => {
   
   // 錯誤 400：creditPackageId 查無對應方案
     const { creditPackageId } = req.params;
-    const existingPackage = await packageRepository.find({ where: { id: creditPackageId } });
+    const existingPackage = await packageRepository.findOneBy({ where: { id: creditPackageId } });
 
     if( !existingPackage ){
       return res.status(400).json({
@@ -63,7 +63,7 @@ const userBuyPackage = async (req, res) => {
     const { id: userId } = req.user;
     const newPackageUserBuy = creditPackagePurchaseRepository.create({
       user_id: userId,
-      package_id: packageId
+      package_id: creditPackageId
     });
 
     await creditPackagePurchaseRepository.save(newPackageUserBuy);
