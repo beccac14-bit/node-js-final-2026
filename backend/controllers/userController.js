@@ -289,9 +289,9 @@ const getUserBookedCoursesAndLeftCredits = async (req, res) => {
     // a. 先查 user 購買的所有 package 並取出 credit_amount 進行加總
     const creditPackageUserBuy = await creditPackagePurchaseRepository.find({ 
       where: { user_id: userId },
-      relations: { CreditPackage: true },
+      relations: { package: true },
       select: {
-        CreditPacage: { credit_amount: true }
+        package: { credit_amount: true }
       }
     });
 
@@ -320,7 +320,7 @@ const getUserBookedCoursesAndLeftCredits = async (req, res) => {
     });
 
     // c. 接著相減得出剩餘的堂數
-    const creditUserLeft = ctotalCreditsUserbuy - coursesUserBooked.length;
+    const creditUserLeft = totalCreditsUserbuy - coursesUserBooked.length;
   
   const result = coursesUserBooked.map( item => ({
     course_id: item.course_id ,
