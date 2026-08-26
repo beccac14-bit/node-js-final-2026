@@ -43,6 +43,38 @@ const postPackages = async (req, res) => {
   });
 };
 
+
+// POST api/credit-package/{creditPackageId} 購買堂數方案（需登入）
+const userBuyPackage = async (req, res) => {
+  
+  // 錯誤 400：creditPackageId 查無對應方案
+    const { packageId } = req.params;
+    const existingPackage = packageRepository.find({ id: packageId });
+
+    if( !existingPackage ){
+      return res.status(400).json({
+        status: 'failed',
+        message: "ID錯誤"
+      });
+    };
+
+  // 建立使用者的方案購買紀錄
+    const { id: userId } = req.user;
+    const newPackageUserBuy = packageRepository.create({
+      user_id: userId,
+      package_id: packageId
+    });
+
+    await packageRepository.save(newPackageUserBuy);
+      
+    res.status(200).json({
+      status: 'success',
+      data: null
+    });
+  
+};
+
+
 // DELETE /api/credit-package/{creditPackageId} 刪除購買方案
 
 const deletePackages = async (req, res) => {
