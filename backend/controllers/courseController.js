@@ -83,7 +83,7 @@ const postCourse = async (req, res) => {
     });
 
     const totalCreditsUserbuy = creditPackageUserBuy.reduce( (acc, cur) => 
-     acc + cur.credit_amount , 0);
+     acc + cur.package.credit_amount , 0);
 
     // b. 再查 user 報名的課程（排除已取消）
     const coursesUserBooked = await courseBookingRepository.find({ 
