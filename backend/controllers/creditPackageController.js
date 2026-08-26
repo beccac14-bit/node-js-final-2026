@@ -106,5 +106,6 @@ const deletePackages = async (req, res) => {
 module.exports = {
   getPackages,
   postPackages,
-  deletePackages
+  deletePackages,
+  userBuyPackage
 };
