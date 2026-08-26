@@ -1,5 +1,6 @@
 const dataSource = require('../config/data-source');
 const packageRepository = dataSource.getRepository('CreditPackage');
+const creditPackagePurchaseRepository = dataSource.getRepository('CreditPackagePurchase')
 
 // GET /api/credit_package 取得購買方案列表
 const getPackages = async (req, res) => {
@@ -48,8 +49,8 @@ const postPackages = async (req, res) => {
 const userBuyPackage = async (req, res) => {
   
   // 錯誤 400：creditPackageId 查無對應方案
-    const { packageId } = req.params;
-    const existingPackage = packageRepository.find({ id: packageId });
+    const { creditPackageId } = req.params;
+    const existingPackage = await packageRepository.find({ where: { id: creditPackageId } });
 
     if( !existingPackage ){
       return res.status(400).json({
@@ -60,12 +61,12 @@ const userBuyPackage = async (req, res) => {
 
   // 建立使用者的方案購買紀錄
     const { id: userId } = req.user;
-    const newPackageUserBuy = packageRepository.create({
+    const newPackageUserBuy = creditPackagePurchaseRepository.create({
       user_id: userId,
       package_id: packageId
     });
 
-    await packageRepository.save(newPackageUserBuy);
+    await creditPackagePurchaseRepository.save(newPackageUserBuy);
       
     res.status(200).json({
       status: 'success',
