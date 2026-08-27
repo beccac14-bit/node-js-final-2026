@@ -298,10 +298,9 @@ const getUserBookedCoursesAndLeftCredits = async (req, res) => {
     const totalCreditsUserbuy = creditPackageUserBuy.reduce( (acc, cur) => 
      acc + cur.package.credit_amount , 0);
 
-    // b. 再查 user 報名的課程（排除已取消）
+    // b. 再查 user 報名的課程（包含已取消）
     const coursesUserBooked = await courseBookingRepository.find({ 
-      where: { user_id: userId, 
-             cancelled_at: IsNull() },
+      where: { user_id: userId },
       select: {
         course_id: true,
         cancelled_at: true,
@@ -324,7 +323,8 @@ const getUserBookedCoursesAndLeftCredits = async (req, res) => {
   
     // d. 接著相減得出剩餘的堂數
     const creditUserLeft = totalCreditsUserbuy - activeCourseUserBooked.length;
-  
+
+  // 2. 把第一步查詢的包含已取消的課程 map 出來
   const result = coursesUserBooked.map( item => ({
     course_id: item.course_id ,
     name: item.course.name,
