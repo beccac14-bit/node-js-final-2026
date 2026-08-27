@@ -316,7 +316,7 @@ const getUserBookedCoursesAndLeftCredits = async (req, res) => {
       relations: { 
         course: { coach: { user: true } }
       },
-      order: { start_at: 'ASC' }
+      order: { course : { start_at: 'ASC' } }
     });
 
     // c. 接著相減得出剩餘的堂數
