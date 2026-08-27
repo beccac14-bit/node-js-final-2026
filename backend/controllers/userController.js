@@ -319,8 +319,11 @@ const getUserBookedCoursesAndLeftCredits = async (req, res) => {
       order: { course : { start_at: 'ASC' } }
     });
 
-    // c. 接著相減得出剩餘的堂數
-    const creditUserLeft = totalCreditsUserbuy - coursesUserBooked.length;
+    // c. 再查 user 沒有取消、已報名的課程
+    const activeCourseUserBooked = coursesUserBooked.filter( b => b.cancelled_at === null );
+  
+    // d. 接著相減得出剩餘的堂數
+    const creditUserLeft = totalCreditsUserbuy - activeCourseUserBooked.length;
   
   const result = coursesUserBooked.map( item => ({
     course_id: item.course_id ,
