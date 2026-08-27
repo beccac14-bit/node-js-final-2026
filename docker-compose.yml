@@ -60,8 +60,15 @@ services:
       - "8080:8080"
     environment:     # 需要哪些變數？可根據 .env.example 對照補齊
       - PORT=8080
-      - 
+      - DB_PORT=5432
       - DB_HOST=postgres
+      - DB_USERNAME=student
+      - DB_PASSWORD=student666
+      - DB_DATABASE=fitness
+      - JWT_SECRET=0987609876
+      - JWT_EXPIRES_DAY=30d
+      - DB_SYNCHRONIZE=true
+      - DB_ENABLE_SSL=false
       # …其餘 DB_ 連線資訊與 JWT 設定自行補上
     depends_on:
       postgres:

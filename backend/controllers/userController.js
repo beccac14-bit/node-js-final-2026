@@ -309,7 +309,7 @@ const getUserBookedCoursesAndLeftCredits = async (req, res) => {
           start_at: true,
           end_at: true,
           meeting_url: true,
-          coach: { user: { name: true } }
+          coach: { id: true, user: { name: true } }
                 },
       },
       relations: { 
