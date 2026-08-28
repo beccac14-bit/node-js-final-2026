@@ -46,6 +46,14 @@ app.get('/healthcheck', (req, res) => {
   res.type('text/plain').send('OK');
 });
 
+app.use((req, res, next) => {
+  res.status(404).json({
+    status: 'error',
+    message: '找不到路由',
+  })
+  return;
+});
+
 
 app.use(errorHandler);
 
