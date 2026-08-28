@@ -65,7 +65,7 @@ services:
       - DB_USERNAME=student
       - DB_PASSWORD=student666
       - DB_DATABASE=fitness
-      - JWT_SECRET=0987609876
+      - JWT_SECRET=testfinalhw
       - JWT_EXPIRES_DAY=30d
       - DB_SYNCHRONIZE=true
       - DB_ENABLE_SSL=false
