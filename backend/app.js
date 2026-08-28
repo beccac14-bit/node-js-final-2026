@@ -42,8 +42,15 @@ app.use('/api/courses', courseRouter);
 
 
 
-app.get('/healthcheck', (req, res) => {
-  res.type('text/plain').send('OK');
+app.get('/healthcheck', async (req, res) => {
+  
+  try {
+    await AppDataSource.query("SELECT 1");
+    res.status(200).send("OK");
+  } catch {
+    res.status(503).send("Service Unavailable");
+  }
+  
 });
 
 app.use((req, res, next) => {
